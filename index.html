@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ckb" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ALWAN SPORT – Live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --turf:#0e1a13; --turf-2:#14251b; --line:#25402f; --chalk:#f1efe4; --muted:#93a89a;
+  --amber:#ffb81c; --live:#e5383b;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--turf);color:var(--chalk);font-family:var(--body)}
+body{min-height:100vh}
+.topbar{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--turf-2)}
+.brand{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.04em}
+.brand span{color:var(--amber)}
+.now{margin-inline-start:auto;display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.now b{color:var(--chalk);font-weight:600}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--live);box-shadow:0 0 0 4px #e5383b33}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;padding:20px;max-width:1500px;margin:0 auto}
+.stage{min-width:0}
+#playerFrame{position:relative;aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+#playerMount{position:absolute;inset:0}
+#playerMount iframe,.alwan-video{width:100%;height:100%;border:0;background:#000;display:block;object-fit:contain}
+#loadingState{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#000a;z-index:3;pointer-events:none}
+.spinner{width:46px;height:46px;border-radius:50%;border:4px solid #ffffff2e;border-top-color:var(--amber);animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.premium-error{position:absolute;inset:0;display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--muted)}
+.premium-error strong{color:var(--chalk);font-size:20px}
+.alwan-controls{position:absolute;left:0;right:0;bottom:0;z-index:4;padding:26px 12px 10px;background:linear-gradient(transparent,#000c);opacity:0;transition:opacity .2s;pointer-events:none}
+.alwan-controls.visible{opacity:1;pointer-events:auto}
+.alwan-controls-row{display:flex;align-items:center;gap:10px}
+.alwan-spacer{flex:1}
+.alwan-ctrl{width:38px;height:38px;border:0;border-radius:8px;background:#ffffff1f;color:#fff;font-size:16px;cursor:pointer}
+.alwan-ctrl:hover{background:#ffffff38}
+.alwan-volume{width:96px;accent-color:var(--amber)}
+.alwan-live{height:34px;padding:0 14px;border:0;border-radius:8px;background:var(--live);color:#fff;font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.06em;cursor:pointer}
+.alwan-live.behind{background:#ffffff26}
+.stage-info{display:flex;align-items:baseline;gap:14px;margin:16px 2px 12px}
+#channelTitle{margin:0;font-family:var(--display);font-size:32px;font-weight:700;letter-spacing:.03em}
+#streamType{font-size:13px;color:var(--muted)}
+.servers-label{font-size:13px;color:var(--muted);margin:0 2px 8px}
+#serverButtons{display:flex;flex-wrap:wrap;gap:8px}
+.server-button{padding:9px 16px;border:1px solid var(--line);border-radius:8px;background:var(--turf-2);color:var(--chalk);font-family:var(--body);font-weight:600;font-size:13px;cursor:pointer}
+.server-button:hover{border-color:var(--muted)}
+.server-button.active{background:var(--amber);border-color:var(--amber);color:#1a1400}
+aside{min-width:0}
+aside h2{margin:0 0 10px;font-family:var(--display);font-size:20px;letter-spacing:.05em;color:var(--muted);font-weight:600}
+#channelList{display:flex;flex-direction:column;gap:6px;max-height:calc(100vh - 120px);overflow-y:auto;padding-inline-end:4px}
+.channel-item{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border:1px solid transparent;border-radius:8px;background:var(--turf-2);color:var(--chalk);text-align:start;cursor:pointer;font-family:var(--body)}
+.channel-item:hover{border-color:var(--line)}
+.channel-item.active{border-color:var(--amber);background:#1f3326}
+.channel-item>span:nth-child(2){flex:1;min-width:0}
+.channel-arrow{color:var(--amber);font-size:22px;line-height:1}
+.channel-name{display:block;font-size:15px;font-weight:600}
+.channel-sub{display:block;margin-top:2px;font-size:11px;color:var(--muted)}
+.channel-logo{width:52px;height:34px;object-fit:contain;border-radius:4px;background:#0000004d;padding:2px}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+.ad-slot{margin:0}
+.ad-slot[hidden]{display:none}
+.ad-top{max-width:1500px;margin:14px auto 0;padding:0 20px}
+.ad-below{margin-top:16px}
+.ad-side{margin-bottom:14px}
+.ad-box{border:1px solid var(--line);border-radius:8px;padding:6px 8px 8px;background:var(--turf-2);overflow:hidden;text-align:center}
+.ad-tag{display:block;text-align:start;font-size:10px;color:var(--muted);margin-bottom:4px}
+.ad-box img{display:block;max-width:100%;height:auto;margin:0 auto;border-radius:4px}
+.ad-box iframe,.ad-box ins{max-width:100%}
+@media (max-width:980px){
+  .ad-top{padding:0 12px}
+  .layout{grid-template-columns:1fr;padding:12px}
+  #channelList{max-height:none}
+  #channelTitle{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){.spinner{animation-duration:2s}.alwan-controls{transition:none}}
+</style>
+<script id="adsense-js" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6147183179563540" crossorigin="anonymous"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">ALWAN <span>SPORT</span></div>
+  <div class="now"><i class="dot"></i><span>Now playing: <b id="currentTitle">—</b></span></div>
+</header>
+<div class="ad-slot ad-top" data-ad-slot="top" hidden></div>
+
+<main class="layout">
+  <section class="stage">
+    <div id="playerFrame">
+      <div id="playerMount"></div>
+      <div id="loadingState"><div class="spinner"></div></div>
+    </div>
+    <div class="stage-info">
+      <h1 id="channelTitle">—</h1>
+      <span id="streamType">LIVE</span>
+    </div>
+    <p class="servers-label">If the stream stops, try another server:</p>
+    <div id="serverButtons"></div>
+    <div class="ad-slot ad-below" data-ad-slot="below" hidden></div>
+  </section>
+
+  <aside>
+    <div class="ad-slot ad-side" data-ad-slot="sidebar" hidden></div>
+    <h2>Channels</h2>
+    <div id="channelList"></div>
+  </aside>
+</main>
+
+<script src="ads.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
+<script>
+/* ---------- Ads: configured in ads.js ---------- */
+function renderAds(){
+  const cfg=window.ADS_CONFIG;
+  if(!cfg||!cfg.enabled) return;
+  document.querySelectorAll('[data-ad-slot]').forEach(el=>{
+    const c=cfg.slots&&cfg.slots[el.dataset.adSlot];
+    if(!c||!c.type||c.type==='none') return;
+    const box=document.createElement('div');box.className='ad-box';
+    const tag=document.createElement('span');tag.className='ad-tag';tag.textContent=cfg.label||'Ad';box.appendChild(tag);
+    try{
+      if(c.type==='image'){
+        const list=Array.isArray(c.items)&&c.items.length?c.items:[c];
+        const it=list[Math.floor(Math.random()*list.length)];
+        if(!it.src) return;
+        const a=document.createElement('a');a.href=it.href||'#';a.target='_blank';a.rel='sponsored noopener noreferrer';
+        const img=document.createElement('img');img.src=it.src;img.alt=it.alt||'Ad';img.loading='lazy';
+        img.onerror=()=>{el.hidden=true};
+        a.appendChild(img);box.appendChild(a);
+      }else if(c.type==='adsense'){
+        const client=c.client||cfg.adsenseClient;
+        if(!client||!c.slot) return;
+        if(!document.getElementById('adsense-js')){
+          const sc=document.createElement('script');sc.id='adsense-js';sc.async=true;sc.crossOrigin='anonymous';
+          sc.src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client='+encodeURIComponent(client);
+          document.head.appendChild(sc);
+        }
+        const ins=document.createElement('ins');ins.className='adsbygoogle';ins.style.display='block';
+        ins.setAttribute('data-ad-client',client);ins.setAttribute('data-ad-slot',c.slot);
+        ins.setAttribute('data-ad-format',c.format||'auto');ins.setAttribute('data-full-width-responsive','true');
+        box.appendChild(ins);
+        el.appendChild(box);el.hidden=false;
+        (window.adsbygoogle=window.adsbygoogle||[]).push({});
+        return;
+      }else if(c.type==='html'){
+        if(!c.code) return;
+        box.appendChild(document.createRange().createContextualFragment(c.code));
+      }else return;
+      el.appendChild(box);el.hidden=false;
+    }catch(e){console.warn('Ad slot failed:',el.dataset.adSlot,e)}
+  });
+}
+renderAds();
+
+const channels = [
+  { id: 1, name: "ALWAN SPORT 1", url: "https://lbgo.bozztv.com/ssh101/ssh101/yusfdara137152/chunks.m3u8", type: "hls" },
+  { id: 2, name: "ALWAN SPORT 2", url: "https://lbgo.bozztv.com/ssh101/ssh101/yusfdara1371523/chunks.m3u8", type: "hls" },
+  { id: 3, name: "ALWAN SPORT 3", url: "https://lbgo.bozztv.com/ssh101/ssh101/yusfdara1371524/chunks.m3u8", type: "hls" },
+  { id: 4, name: "ALWAN SPORT 4", url: "https://lbgo.bozztv.com/ssh101/ssh101/avasport123/chunks.m3u8", type: "hls" },
+  { id: 5, name: "ALWAN SPORT 5", url: "https://ancient-brook-4c40.jegr-jafr123.workers.dev/proxy?url=https://prod-fastly-us-west-2.video.pscp.tv/Transcoding/v1/hls/c0SRpXiS7CTLEugVirw4otUVSV_spbkA5-jnYTmpA4sUuTFWYcWwI7jQ5IYhFP5LXKkQ4zasZn74-x8Wv0FZYg/transcode/us-west-2/periscope-replay-direct-prod-us-west-2-public/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInZlcnNpb24iOiIyIn0.eyJFbmNvZGVyU2V0dGluZyI6ImVuY29kZXJfc2V0dGluZ183MjBwMzBfMTAiLCJIZWlnaHQiOjcyMCwiS2JwcyI6Mjc1MCwiV2lkdGgiOjEyODB9.ldktM4fCFRfkP4ZEBfZPKtlAUNAcTPkoz994YJAzWpE/dynamic_playlist.m3u8?type=live", type: "hls" },
+  { id: 6, name: "ALWAN SPORT 6", url: "https://ancient-brook-4c40.jegr-jafr123.workers.dev/proxy?url=https://prod-fastly-us-west-2.video.pscp.tv/Transcoding/v1/hls/piCwtvWjqmtjEd1lF4U6kytw9PxvDsP5S4JIDFqzxLIok4YP-abtPQQ-5jFjBjj9ot-_5A8RIJh3asFdP80HjQ/transcode/us-west-2/periscope-replay-direct-prod-us-west-2-public/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInZlcnNpb24iOiIyIn0.eyJFbmNvZGVyU2V0dGluZyI6ImVuY29kZXJfc2V0dGluZ183MjBwMzBfMTAiLCJIZWlnaHQiOjcyMCwiS2JwcyI6Mjc1MCwiV2lkdGgiOjEyODB9.ldktM4fCFRfkP4ZEBfZPKtlAUNAcTPkoz994YJAzWpE/dynamic_playlist.m3u8?type=live", type: "hls" },
+  { id: 7, name: "ALWAN SPORT 7", url: "https://maten-tv-proxy.matenarif2.workers.dev/playlist.m3u8?url=https://ok.ru/video/16523148860981", type: "hls" },
+  { id: 8, name: "ALWAN SPORT 8", url: "https://ameditv.ai.studio/api/proxy?url=https://prod-fastly-us-west-2.video.pscp.tv/Transcoding/v1/hls/cZvRNpyhu0XHzkGqKKaJzIqadoXMIDs4usw58wXS90tf1_eUQ9UHD2lb0w4e0oMssvI0QAUSy_mS-GsGyrqlow/transcode/us-west-2/periscope-replay-direct-prod-us-west-2-public/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInZlcnNpb24iOiIyIn0.eyJFbmNvZGVyU2V0dGluZyI6ImVuY29kZXJfc2V0dGluZ18xMDgwcDMwXzEwIiwiSGVpZ2h0IjoxMDgwLCJLYnBzIjo1NTAwLCJXaWR0aCI6MTkyMH0.OImMZabKYJ0cs9CnIapU-4aBk6KNBiJxi1hh-6l4BZ4/dynamic_delta.m3u8?type=live", type: "hls" },
+  { id: 9, name: "NRT SPORT", url: "https://streams.rooter.gg/hls/db2caa46259e519b3763af9390b2aa0a/hd720.m3u8", type: "hls" },
+  { id: 10, name: "ld sport chaker", url: "https://streams.rooter.gg/hls/4676b1c60190303b0fba515f5157ccb1/high.m3u8", type: "hls" },
+  { id: 11, name: "AVA SPORT", url: "/proxy?url=http%3A%2F%2Fyusftsoreforver.ddns.net%2Flive%2Fku%2Fku%2Funit%2FAva_Sport%2Findex.m3u8", type: "hls", logo: "https://mixmedia.tv/wp-content/uploads/2023/12/ava-sport.png" },
+  { id: 12, name: "NRT SPORT", url: "/proxy?url=http%3A%2F%2Fdashcloudflare.ddns.net%2Flive%2Fku%2Fku%2Funit%2Fnrt_sport%2Findex.m3u8", type: "hls", logo: "https://mixmedia.tv/wp-content/uploads/2022/08/nrt-sport.png" } ,
+  { id: 13, name: "ASO SPORT", url: "/proxy?url=http%3A%2F%2Fyusftsoreforver.ddns.net%2Flive%2Fku%2Fku%2Funit%2Faso_sport%2Findex.m3u8", type: "hls", logo: "https://mixmedia.tv/wp-content/uploads/2024/05/ASO-Sport.png" },
+  { id: 14, name: "FALCON EYE 1", url: "/proxy?url=http%3A%2F%2Fdashcloudflare.ddns.net%2Flive%2Fku%2Fku%2Funit%2Ffalcone_1%2Findex.m3u8", type: "hls", logo: "https://mixmedia.tv/wp-content/uploads/2022/08/falcon-1-1.png" },
+  { id: 15, name: "FALCON EYE 2", url: "/proxy?url=http%3A%2F%2Fdashcloudflare.ddns.net%2Flive%2Fku%2Fku%2Funit%2Ffalcone_2%2Findex.m3u8", type: "hls", logo: "https://mixmedia.tv/wp-content/uploads/2022/08/falcon-1-1.png" },
+  { id: 16, name: "FALCON EYE 3", url: "/proxy?url=http%3A%2F%2Fdashcloudflare.ddns.net%2Flive%2Fku%2Fku%2Funit%2Ffalcone_2%2Findex.m3u8", type: "hls", logo: "https://assets.bein.com/mena/sites/3/2015/06/beIN_SPORTS1_DIGITAL_Mono.png" }
+];
+
+const channelServers = {
+  1: ["/proxy?url=http%3A%2F%2Fdashcloudflare.ddns.net%2Flive%2Far%2Fqa%2Fbein%2Fbein_sport_1_hd%2Ftracks-v1a1%2Fmono.ts.m3u8", "https://df11.mp4.ir/video/2026/11/321750-569311593/m3u8/360p/out.m3u8", "https://183.bozztv.com/giatv/giatv-avasoport/avasoport/playlist.m3u8", "https://ameditv.ai.studio/api/proxy?url=", "https://lbgo.bozztv.com/ssh101/ssh101/yusfstorenrtspo/chunks.m3u8?lb_backend_hint=6"],
+  2: ["/proxy?url=http%3A%2F%2Fdashcloudflare.ddns.net%2Flive%2Far%2Fqa%2Fbein%2Fbein_sport_2_hd%2Ftracks-v1a1%2Fmono.ts.m3u8", "https://df11.mp4.ir/video/2026/11/321750-569311593/m3u8/360p/out.m3u8", "https://lbgo.bozztv.com/ssh101/ssh101/avasport123/chunks.m3u8", "https://ameditv.ai.studio/api/proxy?url=https://blcco.linkip.org/live/3460_.m3u8", "https://lbgo.bozztv.com/ssh101/ssh101/alwan6websitealwanlive6/chunks.m3u8"],
+  3: ["/proxy?url=http%3A%2F%2Fdashcloudflare.ddns.net%2Flive%2Far%2Fqa%2Fbein%2Fbein_sport_3_hd%2Ftracks-v1a1%2Fmono.ts.m3u8", "https://df11.mp4.ir/video/2026/11/321750-569311593/m3u8/360p/out.m3u8", "https://lbgo.bozztv.com/ssh101/ssh101/alwan3websitealwanlive2/chunks.m3u8", "https://lbgo.bozztv.com/ssh101/ssh101/alwan3websitealwanlive2/chunks.m3u8", "https://lbgo.bozztv.com/ssh101/live/biner-zaxo/playlist.m3u8"],
+  4: ["/proxy?url=http%3A%2F%2Fdashcloudflare.ddns.net%2Flive%2Far%2Fqa%2Fbein%2Fbein_sport_4_hd%2Ftracks-v1a1%2Fmono.ts.m3u8", "https://df11.mp4.ir/video/2026/11/321750-569311593/m3u8/360p/out.m3u8", "https://lbgo.bozztv.com/ssh101/ssh101/alwan4websitealwanlive2/chunks.m3u8", "https://lbgo.bozztv.com/ssh101/ssh101/alwan4websitealwanlive2/chunks.m3u8", "https://lbgo.bozztv.com/ssh101/live/biner-zaxo/playlist.m3u8"],
+  5: ["/proxy?url=http%3A%2F%2Fdashcloudflare.ddns.net%2Flive%2Far%2Fqa%2Fbein%2Fbein_sport_5_hd%2Ftracks-v1a1%2Fmono.ts.m3u8", "https://df11.mp4.ir/video/2026/11/321750-569311593/m3u8/360p/out.m3u8", "https://lbgo.bozztv.com/ssh101/ssh101/alwan5websitealwanlive5/chunks.m3u8", "https://lbgo.bozztv.com/ssh101/ssh101/alwan5websitealwanlive2/chunks.m3u8", "https://lbgo.bozztv.com/ssh101/live/biner-zaxo/playlist.m3u8"],
+  6: ["/proxy?url=http%3A%2F%2Fdashcloudflare.ddns.net%2Flive%2Far%2Fqa%2Fbein%2Fbein_sport_6_hd%2Ftracks-v1a1%2Fmono.ts.m3u8", "https://nawxxxxxxxxxxxxxxxxxxxx.yusf-dara1000.workers.dev/falcone1/index.m3u8", "https://lbgo.bozztv.com/ssh101/ssh101/alwan6websitealwanlive6/chunks.m3u8", "https://lbgo.bozztv.com/ssh101/ssh101/alwan6websitealwanlive6/chunks.m3u8", "https://hidden-water-bf2b.emana-ahmad11-eeb.workers.dev/playlist.m3u8?url=https://ok.ru/video/17384839782073"],
+  7: ["/proxy?url=http%3A%2F%2Fdashcloudflare.ddns.net%2Flive%2Far%2Fqa%2Fbein%2Fbein_sport_7_hd%2Ftracks-v1a1%2Fmono.ts.m3u8", "https://nawxxxxxxxxxxxxxxxxxxxx.yusf-dara1000.workers.dev/falcone1/index.m3u8"],
+  8: ["/proxy?url=http%3A%2F%2Fdashcloudflare.ddns.net%2Flive%2Far%2Fqa%2Fbein%2Fbein_sport_8_hd%2Ftracks-v1a1%2Fmono.ts.m3u8", "https://ameditv.ai.studio/api/proxy?url=https://df11.mp4.ir/video/2026/11/321750-569311593/m3u8/360p/out.m3u8"] ,
+  16: ["/proxy?url=http%3A%2F%2Fdashcloudflare.ddns.net%2Flive%2Far%2Fqa%2Fbein%2Fbein_sport_9_hd%2Ftracks-v1a1%2Fmono.ts.m3u8"]
+};
+const channelList=document.getElementById('channelList');
+const mount=document.getElementById('playerMount');
+const loading=document.getElementById('loadingState');
+const currentTitle=document.getElementById('currentTitle');
+const channelTitle=document.getElementById('channelTitle');
+const streamType=document.getElementById('streamType');
+let activeId=1;
+let activeServer=1;
+let hlsInstance=null;
+let activeVideo=null;
+let cleanupPlayer=()=>{};
+
+function setLoading(show){loading.style.display=show?'flex':'none'}
+function setOffline(){/* offline overlay intentionally disabled */}
+function clearOffline(){/* offline overlay intentionally disabled */}
+function destroy(){cleanupPlayer();cleanupPlayer=()=>{};if(hlsInstance){try{hlsInstance.destroy()}catch(e){}hlsInstance=null}if(activeVideo){try{activeVideo.pause();activeVideo.removeAttribute('src');activeVideo.load()}catch(e){}activeVideo=null}mount.innerHTML='';mount.classList.remove('premium-mount');setLoading(false);clearOffline()}
+function seekWindow(video){
+  try{if(video.seekable&&video.seekable.length)return {start:video.seekable.start(0),end:video.seekable.end(video.seekable.length-1)}}catch(e){}
+  return {start:0,end:Number.isFinite(video.duration)?video.duration:0};
+}
+
+function attachControls(video,hls){
+  const wrap=document.getElementById('playerFrame');
+  const controls=document.createElement('div');
+  controls.className='alwan-controls visible';
+  controls.innerHTML=`
+    <div class="alwan-controls-row">
+      <button class="alwan-ctrl" id="alwanPlay" title="Play / Pause" aria-label="Play / Pause">▶</button>
+      <button class="alwan-ctrl" id="alwanMute" title="دەنگ بێدەنگ / چالاک" aria-label="دەنگ چالاک بکە">🔇</button>
+      <input class="alwan-volume" id="alwanVolume" type="range" min="0" max="1" step="0.05" value="1" title="ڕێژەی دەنگ" aria-label="ڕێژەی دەنگ">
+      <span class="alwan-spacer"></span>
+      <button class="alwan-live" id="alwanLive">LIVE</button>
+      <button class="alwan-ctrl" id="alwanFs" title="Fullscreen" aria-label="Fullscreen">⛶</button>
+    </div>`;
+  wrap.appendChild(controls);
+  const play=controls.querySelector('#alwanPlay');
+  const mute=controls.querySelector('#alwanMute');
+  const volume=controls.querySelector('#alwanVolume');
+  const live=controls.querySelector('#alwanLive');
+  const fs=controls.querySelector('#alwanFs');
+  let hideTimer=null;
+
+  const show=()=>{
+    controls.classList.add('visible');
+    clearTimeout(hideTimer);
+    hideTimer=setTimeout(()=>{
+      if(!video.paused && !wrap.matches(':hover')) controls.classList.remove('visible');
+    },2800);
+  };
+  const windowInfo=()=>{
+    try{
+      if(video.seekable && video.seekable.length) return {start:video.seekable.start(0),end:video.seekable.end(video.seekable.length-1)};
+    }catch(e){}
+    return {start:0,end:Number.isFinite(video.duration)?video.duration:0};
+  };
+  const update=()=>{
+    const w=windowInfo();
+    const span=Math.max(.001,w.end-w.start);
+    const pos=Math.max(0,Math.min(1,(video.currentTime-w.start)/span));
+    const behind=pos<.985;
+    live.classList.toggle('behind',behind);
+    live.textContent=behind?'GO LIVE':'LIVE';
+    play.textContent=video.paused?'▶':'❚❚';
+    play.setAttribute('aria-label',video.paused?'Play':'Pause');
+    mute.textContent=(video.muted || video.volume===0)?'🔇':'🔊';
+    mute.setAttribute('aria-label',(video.muted || video.volume===0)?'دەنگ چالاک بکە':'دەنگ بێدەنگ بکە');
+    volume.value=video.volume;
+  };
+  mute.onclick=()=>{
+    if(video.muted || video.volume===0){
+      video.muted=false;
+      if(video.volume===0) video.volume=Number(volume.value)||1;
+    }else{
+      video.muted=true;
+    }
+    update();show();
+  };
+  volume.addEventListener('input',()=>{
+    video.volume=Number(volume.value);
+    video.muted=video.volume===0;
+    update();show();
+  });
+  play.onclick=()=>{if(video.paused) video.play().catch(()=>{});else video.pause();show()};
+  const enterFullscreen=()=>{
+    try{
+      if(document.fullscreenElement){document.exitFullscreen?.();return}
+      if(wrap.requestFullscreen){wrap.requestFullscreen({navigationUI:'hide'}).catch(()=>{});return}
+      if(video.webkitEnterFullscreen){video.webkitEnterFullscreen();return}
+      if(video.webkitRequestFullscreen){video.webkitRequestFullscreen();return}
+    }catch(e){}
+    show();
+  };
+  fs.onclick=enterFullscreen;
+  live.onclick=()=>{
+    const w=windowInfo();
+    if(w.end>w.start) video.currentTime=Math.max(w.start,w.end-.15);
+    video.play().catch(()=>{});
+    show();
+  };
+  ['mousemove','pointermove','touchstart','touchend'].forEach(ev=>wrap.addEventListener(ev,show,{passive:true}));
+  wrap.addEventListener('dblclick',enterFullscreen);
+  wrap.addEventListener('mouseleave',()=>{if(!video.paused) controls.classList.remove('visible')});
+  window.addEventListener('fullscreenchange',update);
+  ['play','pause','timeupdate','progress','durationchange','loadedmetadata','canplay','playing'].forEach(ev=>video.addEventListener(ev,update));
+  video.addEventListener('waiting',()=>{setLoading(true);show()});
+  video.addEventListener('playing',()=>{setLoading(false);show()});
+  const onKey=(e)=>{
+    if(document.activeElement && ['INPUT','BUTTON'].includes(document.activeElement.tagName)) return;
+    if(e.code==='Space'){e.preventDefault();play.click()}
+    else if(e.key.toLowerCase()==='f') enterFullscreen();
+  };
+  window.addEventListener('keydown',onKey);
+  update();show();
+  return ()=>{
+    clearTimeout(hideTimer);
+    window.removeEventListener('keydown',onKey);
+    window.removeEventListener('fullscreenchange',update);
+    controls.remove();
+    try{video.pause()}catch(e){}
+  };
+}
+
+// Route every HLS request through this site's Cloudflare Worker.
+// The Worker rewrites nested playlist/segment URLs back through /proxy as well.
+function sameDomainProxyUrl(sourceUrl){
+  if(typeof sourceUrl==='string' && sourceUrl.startsWith('/proxy')) return sourceUrl;
+  try{
+    const parsed = new URL(sourceUrl, location.href);
+    // Some older entries contain a masked/placeholder Worker hostname.
+    // Recover the actual upstream URL from its query string when possible.
+    if (/^x+$/i.test(parsed.hostname.split('.')[0])) {
+      const nested = parsed.searchParams.get('url') || parsed.searchParams.get('target');
+      if (nested) return location.origin + '/proxy?url=' + encodeURIComponent(nested);
+    }
+    if (parsed.origin === location.origin && parsed.pathname.startsWith('/proxy')) return parsed.href;
+    return location.origin + '/proxy?url=' + encodeURIComponent(parsed.href);
+  }catch(e){
+    return sourceUrl;
+  }
+}
+
+
+// Try the direct URL first (works when the source allows CORS), then this site's /proxy.
+function sourceCandidates(url){
+  const abs=/^https?:\/\//i.test(url);
+  const prox=sameDomainProxyUrl(url);
+  if(!abs) return [prox];
+  return prox===url?[url]:[url,prox];
+}
+function tryNextServer(reason){
+  const urls=channelServers[activeId]||[];
+  for(let n=activeServer+1;n<=urls.length;n++){
+    if(urls[n-1]){ streamType.textContent='SERVER '+activeServer+' failed ('+reason+') → SERVER '+n; openServer(activeId,n); return true; }
+  }
+  return false;
+}
+
+function createPremiumPlayer(url,name){
+  if(location.protocol==='file:' && url.startsWith('/proxy')){
+    mount.innerHTML='<div class="premium-error"><strong>This source needs your website</strong><span>/proxy only exists on your hosted domain (Cloudflare Worker). Opening the file from your computer cannot load it. Try another SERVER.</span></div>';
+    setLoading(false);streamType.textContent='NEEDS HOSTED /proxy';
+    setTimeout(()=>tryNextServer('local file'),1200);
+    return;
+  }
+  setLoading(true);
+  mount.innerHTML='';
+  mount.classList.add('premium-mount');
+  const video=document.createElement('video');
+  video.className='alwan-video';
+  video.setAttribute('playsinline','');
+  video.setAttribute('webkit-playsinline','');
+  video.setAttribute('preload','auto');
+  video.setAttribute('controlslist','nodownload noplaybackrate');
+  video.setAttribute('aria-label',name);
+  video.autoplay=true;
+  video.muted=true;
+  video.playsInline=true;
+  mount.appendChild(video);
+  activeVideo=video;
+
+  let hls=null;
+  const playWhenReady=()=>video.play().catch(()=>{});
+  const handleNativeError=()=>{
+    setLoading(false);
+    streamType.textContent='STREAM ERROR • CHECK SOURCE/CORS';
+  };
+
+  if(window.Hls && Hls.isSupported()){
+    hls=new Hls({
+      enableWorker:true,
+      lowLatencyMode:true,
+      backBufferLength:30,
+      liveSyncDurationCount:3,
+      liveMaxLatencyDurationCount:8,
+      manifestLoadingTimeOut:20000,
+      fragLoadingTimeOut:20000,
+      capLevelToPlayerSize:true
+    });
+    hlsInstance=hls;
+    hls.attachMedia(video);
+    const cands=sourceCandidates(url);let ci=0;
+    hls.on(Hls.Events.MEDIA_ATTACHED,()=>hls.loadSource(cands[0]));
+    hls.on(Hls.Events.MANIFEST_PARSED,()=>{
+      setLoading(false);
+      streamType.textContent='PREMIUM • HLS • LIVE';
+      playWhenReady();
+    });
+    hls.on(Hls.Events.ERROR,(_event,data)=>{
+      if(!data || !data.fatal) return;
+      const code=(data.response&&data.response.code)?'HTTP '+data.response.code:(data.details||'error');
+      if(data.type===Hls.ErrorTypes.NETWORK_ERROR){
+        if(ci<cands.length-1){ci++;streamType.textContent='RETRY VIA PROXY…';try{hls.loadSource(cands[ci])}catch(e){}return}
+        setLoading(false);
+        if(!tryNextServer(code)) streamType.textContent='OFFLINE • '+code;
+      }else if(data.type===Hls.ErrorTypes.MEDIA_ERROR){
+        try{hls.recoverMediaError()}catch(e){handleNativeError()}
+      }else{
+        setLoading(false);
+        if(!tryNextServer(code)) streamType.textContent='STREAM ERROR • '+code;
+        try{hls.destroy()}catch(e){}
+      }
+    });
+    cleanupPlayer=attachControls(video,hls);
+  }else if(video.canPlayType('application/vnd.apple.mpegurl')){
+    video.src=sourceCandidates(url)[0];
+    video.addEventListener('loadedmetadata',()=>{
+      setLoading(false);
+      streamType.textContent='PREMIUM • HLS • LIVE';
+      playWhenReady();
+    },{once:true});
+    video.addEventListener('error',handleNativeError);
+    cleanupPlayer=attachControls(video,null);
+    video.load();
+  }else{
+    mount.innerHTML='<div class="premium-error"><strong>Player unavailable</strong><span>This browser cannot play HLS streams.</span></div>';
+    setLoading(false);
+    streamType.textContent='UNSUPPORTED PLAYER';
+    return;
+  }
+  video.addEventListener('playing',()=>{setLoading(false);streamType.textContent='PREMIUM • HLS • LIVE'});
+  video.addEventListener('waiting',()=>setLoading(true));
+  video.addEventListener('error',handleNativeError);
+}
+
+function createIframe(url){
+  const iframe=document.createElement('iframe');iframe.src=url;iframe.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';iframe.allowFullscreen=true;iframe.referrerPolicy='strict-origin-when-cross-origin';mount.appendChild(iframe);setLoading(false);streamType.textContent='LIVE';
+}
+const serverButtons=document.getElementById('serverButtons');
+function renderServerButtons(channelId){
+  if(!serverButtons) return;
+  serverButtons.innerHTML='';
+  const serverCount = Number(channelId) === 16 ? 1 : 5;
+  for(let n=1;n<=serverCount;n++){
+    const b=document.createElement('button');
+    b.type='button'; b.className='server-button'+(n===1?' active':'');
+    b.textContent='SERVER '+n; b.setAttribute('aria-label','Play SERVER '+n);
+    b.addEventListener('click',()=>openServer(channelId,n));
+    serverButtons.appendChild(b);
+  }
+}
+function openServer(channelId,serverNo){
+  const ch=channels.find(x=>x.id===Number(channelId))||channels[0];
+  const urls=channelServers[ch.id];
+  const url=urls ? urls[serverNo-1] : ch.url;
+  if(!url) return;
+  activeId=ch.id;activeServer=serverNo;
+  document.querySelectorAll('.server-button').forEach((b,i)=>b.classList.toggle('active',i===serverNo-1));
+  destroy();
+  currentTitle.textContent=ch.name; channelTitle.textContent=ch.name;
+  if(url.includes('ok.ru/videoembed/')) createIframe(url.startsWith('//')?'https:'+url:url);
+  else if(url.endsWith('.m3u8') || url.includes('.m3u8?')) createPremiumPlayer(url,ch.name);
+  else createIframe(url);
+  const u=new URL(location.href);u.searchParams.set('channel',String(ch.id));u.searchParams.set('server',String(serverNo));history.replaceState({channel:ch.id,server:serverNo},'',u.pathname+u.search);
+}
+
+function openChannelUnlocked(id){
+  const ch=channels.find(x=>x.id===Number(id))||channels[0];
+  activeId=ch.id;destroy();
+  document.querySelectorAll('.channel-item').forEach(x=>x.classList.toggle('active',Number(x.dataset.id)===ch.id));
+  currentTitle.textContent=ch.name;channelTitle.textContent=ch.name;
+  renderServerButtons(ch.id);
+  if(ch.type==='offline' && !channelServers[ch.id]){
+    mount.classList.remove('premium-mount');
+    mount.innerHTML='<div class="premium-error"><strong>'+ch.name+'</strong><span>ئەم کەناڵە سەرچاوەی پەخشی نییە.</span></div>';
+    setLoading(false);streamType.textContent='SOURCE NOT CONFIGURED';
+  }else openServer(ch.id,1);
+}
+
+
+// SOLO 1 HD access gate. The player is not mounted until the code is accepted.
+let solo1hdUnlocked = false;
+function openChannel(id){
+  if (Number(id) !== 15 || solo1hdUnlocked) return openChannelUnlocked(id);
+  if (document.getElementById('solo1hd-code-overlay')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'solo1hd-code-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'solo1hd-code-title');
+  overlay.innerHTML = `
+    <div class="solo-code-card" dir="rtl">
+      <button type="button" class="solo-code-close" id="solo1hd-code-cancel" aria-label="Close">×</button>
+      <div class="solo-code-brand">
+        <div class="solo-code-mark"><span>🔒</span></div>
+        <span class="solo-code-kicker">ALWAN SPORT • PREMIUM ACCESS</span>
+        <h2 id="solo1hd-code-title">SOLO 1 HD</h2>
+        <p class="solo-code-intro">Enter your access code to unlock this channel, or request a code on Telegram.</p>
+      </div>
+
+      <section class="solo-code-section solo-code-entry" aria-label="داخڵکردنی کۆد">
+        <div class="solo-code-section-head">
+          <span class="solo-code-step">01</span>
+          <div><strong>Access Code</strong><small>Enter your code below</small></div>
+        </div>
+        <form id="solo1hd-code-form">
+          <label class="solo-code-label" for="solo1hd-code-input">ACCESS CODE</label>
+          <input id="solo1hd-code-input" type="password" inputmode="numeric" autocomplete="off" placeholder="Enter your code" aria-label="Access code" required>
+          <div id="solo1hd-code-error" role="alert" aria-live="polite"></div>
+          <button type="submit" class="solo-code-submit"><span>UNLOCK CHANNEL</span><b>←</b></button>
+        </form>
+      </section>
+
+      <section class="solo-code-section solo-code-get" aria-label="بەدەستهێنانی کۆد">
+        <div class="solo-code-telegram-icon">✈</div>
+        <div class="solo-code-get-copy">
+          <span class="solo-code-step">02 • GET ACCESS CODE</span>
+          <strong>DON’T HAVE A CODE?</strong>
+          <small>Join our Telegram channel and request your access code.</small>
+        </div>
+        <a class="solo-code-telegram" href="https://t.me/+90LPYfhU7QU5Y2My" target="_blank" rel="noopener noreferrer">
+          <span>GET ACCESS CODE</span><b>↗</b>
+        </a>
+      </section>
+      <div class="solo-code-footer"><span class="solo-code-secure">●</span> SECURED BY ALWAN SPORT</div>
+    </div>`;
+  const style = document.createElement('style');
+  style.id = 'solo1hd-code-style';
+  style.textContent = `
+    #solo1hd-code-overlay{
+      position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;
+      padding:18px;background:radial-gradient(ellipse at 50% 0%,rgba(31,91,145,.25),transparent 55%),rgba(2,6,14,.91);
+      backdrop-filter:blur(11px);font-family:Arial,sans-serif;overflow-y:auto
+    }
+    #solo1hd-code-overlay *{box-sizing:border-box}
+    #solo1hd-code-overlay .solo-code-card{
+      position:relative;width:min(100%,440px);padding:30px 25px 20px;color:#f7f9fd;
+      background:linear-gradient(155deg,#172438 0%,#0c1421 52%,#080e18 100%);
+      border:1px solid rgba(99,166,224,.34);border-radius:24px;
+      box-shadow:0 28px 90px rgba(0,0,0,.68),inset 0 1px rgba(255,255,255,.07);
+      animation:soloCardIn .28s ease-out
+    }
+    @keyframes soloCardIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+    .solo-code-close{position:absolute;top:13px;left:13px;width:32px;height:32px;border:1px solid #ffffff18;border-radius:10px;background:#ffffff0b;color:#cbd7e6;font-size:22px;cursor:pointer}
+    .solo-code-brand{text-align:center;padding:0 8px 20px}
+    .solo-code-mark{width:62px;height:62px;margin:0 auto 12px;display:grid;place-items:center;border-radius:19px;
+      background:linear-gradient(145deg,#213d5b,#10243a);border:1px solid #5aa9e455;box-shadow:0 8px 25px #0005}
+    .solo-code-mark span{font-size:27px}
+    .solo-code-kicker{display:block;color:#78bdf0;font-size:9px;font-weight:900;letter-spacing:2px;margin-bottom:7px;direction:ltr}
+    .solo-code-brand h2{margin:0 0 8px;color:#fff;font-size:25px;font-weight:900;letter-spacing:1.6px;direction:ltr}
+    .solo-code-intro{max-width:330px;margin:0 auto;color:#aebdd0;font-size:13px;line-height:1.9}
+    .solo-code-section{border:1px solid rgba(148,177,210,.16);border-radius:17px;background:rgba(255,255,255,.035);padding:17px;margin-top:12px}
+    .solo-code-section-head{display:flex;align-items:center;gap:11px;margin-bottom:14px;text-align:right}
+    .solo-code-step{flex:0 0 34px;width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:#183653;color:#83c6f6;font-size:12px;font-weight:900;direction:ltr}
+    .solo-code-section-head strong,.solo-code-get-copy strong{display:block;color:#f4f7fc;font-size:14px;font-weight:900}
+    .solo-code-section-head small,.solo-code-get-copy small{display:block;margin-top:4px;color:#93a5bb;font-size:11px;line-height:1.7}
+    .solo-code-label{display:block;margin:0 0 7px;color:#c3d0df;font-size:11px;font-weight:700;text-align:right}
+    #solo1hd-code-input{display:block;width:100%;height:49px;padding:0 14px;border:1px solid #344d68;border-radius:11px;outline:none;background:#080f19;color:#fff;text-align:center;font-size:20px;letter-spacing:7px;transition:border-color .2s,box-shadow .2s}
+    #solo1hd-code-input:focus{border-color:#56a9e8;box-shadow:0 0 0 3px #56a9e825}
+    #solo1hd-code-error{min-height:20px;margin:5px 0 2px;color:#ff8585;font-size:11px;text-align:center}
+    .solo-code-submit{width:100%;height:46px;display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:11px;
+      background:linear-gradient(100deg,#1679bd,#269fe2);color:#fff;font-size:13px;font-weight:900;cursor:pointer;
+      box-shadow:0 8px 22px #087ac044;transition:transform .18s,filter .18s}
+    .solo-code-submit:hover{filter:brightness(1.12);transform:translateY(-1px)}
+    .solo-code-submit b{font-size:19px}
+    .solo-code-get{display:flex;align-items:center;gap:12px;border-color:rgba(45,164,225,.38);
+      background:linear-gradient(110deg,rgba(20,113,169,.19),rgba(34,158,217,.07))}
+    .solo-code-telegram-icon{flex:0 0 42px;width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:#229ed9;color:#fff;font-size:21px;box-shadow:0 5px 17px #229ed944}
+    .solo-code-get-copy{min-width:0;flex:1;text-align:right}
+    .solo-code-get-copy .solo-code-step{display:block;width:auto;height:auto;margin-bottom:5px;background:none;color:#62b8ed;font-size:9px;letter-spacing:.8px}
+    .solo-code-telegram{flex:0 0 auto;min-height:39px;padding:0 12px;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+      border:1px solid #53b8ed55;border-radius:10px;background:linear-gradient(135deg,#229ed9,#147eb8);color:#fff;
+      text-decoration:none;font-size:11px;font-weight:900;white-space:nowrap;box-shadow:0 6px 17px #087ac033;transition:filter .18s,transform .18s}
+    .solo-code-telegram:hover{filter:brightness(1.12);transform:translateY(-1px)}
+    .solo-code-telegram b{font-size:15px;direction:ltr}
+    .solo-code-footer{margin-top:17px;text-align:center;color:#71849b;font-size:10px}
+    .solo-code-secure{color:#45c99a;margin-left:5px}
+    @media(max-width:420px){
+      #solo1hd-code-overlay{padding:12px}
+      #solo1hd-code-overlay .solo-code-card{padding:25px 16px 17px;border-radius:20px}
+      .solo-code-section{padding:14px}
+      .solo-code-telegram{padding:0 9px;font-size:10px}
+      .solo-code-get{gap:9px}
+      .solo-code-telegram-icon{flex-basis:37px;width:37px;height:37px}
+    }
+  `;
+  if (!document.getElementById('solo1hd-code-style')) document.head.appendChild(style);
+  document.body.appendChild(overlay);
+  const input = document.getElementById('solo1hd-code-input');
+  input.focus();
+  document.getElementById('solo1hd-code-form').addEventListener('submit', function(event){
+    event.preventDefault();
+    if (input.value === '123') {
+      solo1hdUnlocked = true;
+      overlay.remove();
+      openChannelUnlocked(15);
+    } else {
+      document.getElementById('solo1hd-code-error').textContent = 'کۆدەکە هەڵەیە، تکایە دووبارە هەوڵ بدەرەوە.';
+      input.value = '';
+      input.focus();
+    }
+  });
+  document.getElementById('solo1hd-code-cancel').addEventListener('click', function(){ overlay.remove(); });
+}
+
+channels.forEach(ch=>{
+  const row=document.createElement('button');row.type='button';row.className='channel-item';row.dataset.id=String(ch.id);
+  row.innerHTML=`<span class="channel-arrow">›</span><span><b class="channel-name">${ch.name}</b><small class="channel-sub">${ch.type==='hls'?'LIVE • M3U8':'LIVE'}</small></span>${ch.logo?`<img class="channel-logo" src="${ch.logo}" alt="${ch.name}" loading="lazy" onerror="this.remove()">`:''}`;
+  row.addEventListener('click',()=>openChannel(ch.id));channelList.appendChild(row);
+});
+const initial=Number(new URLSearchParams(location.search).get('channel'));
+openChannel(channels.some(c=>c.id===initial)?initial:1);
+</script>
+</body>
+</html>
